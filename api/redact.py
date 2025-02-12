@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 import fitz  # PyMuPDF
 import os
 import shutil
@@ -28,7 +28,53 @@ def redact_submission_ids(input_pdf, output_pdf):
 
     doc.save(output_pdf)
 
-@app.post("/redact")
+@app.get("/", response_class=HTMLResponse)
+async def get_upload_form():
+    """Serves an HTML form to upload a PDF file."""
+    return """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PDF Redaction</title>
+    </head>
+    <body>
+        <h2>Upload PDF to Redact</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file" accept=".pdf" required />
+            <button type="submit">Upload and Redact</button>
+        </form>
+        <div id="status"></div>
+        <script>
+            const form = document.getElementById('uploadForm');
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const formData = new FormData();
+                formData.append('file', document.getElementById('fileInput').files[0]);
+
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = 'Processing...';
+
+                const response = await fetch('/api/redact', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.redacted_pdf) {
+                    statusDiv.innerHTML = 'Redaction complete! Downloading your file...';
+                    window.location.href = data.redacted_pdf;
+                } else {
+                    statusDiv.innerHTML = 'Error during redaction';
+                }
+            });
+        </script>
+    </body>
+    </html>
+    """
+
+@app.post("/api/redact")
 async def redact_pdf(file: UploadFile = File(...)):
     """Redacts sensitive information from an uploaded PDF."""
     input_path = os.path.join(UPLOAD_DIR, file.filename)
@@ -42,7 +88,7 @@ async def redact_pdf(file: UploadFile = File(...)):
     # Return the redacted PDF download URL
     return {"message": "Redaction complete", "redacted_pdf": f"/api/download/redacted_{file.filename}"}
 
-@app.get("/download/{filename}")
+@app.get("/api/download/{filename}")
 async def download_pdf(filename: str):
     """Allows downloading of the redacted PDF."""
     file_path = os.path.join(UPLOAD_DIR, filename)
