@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "api/redact.py",
+        "use": "@vercel/python"
+      }
+    ],
+    "routes": [
+      { "src": "/redact", "dest": "api/redact.py" }
+    ]
+  }
+  
