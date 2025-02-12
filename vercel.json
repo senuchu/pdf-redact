@@ -8,15 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/",
-      "dest": "/api/redact.py"
-    },
-    {
       "src": "/redact",
-      "dest": "/api/redact.py"
-    },
-    {
-      "src": "/download/(.*)",
       "dest": "/api/redact.py"
     }
   ]
