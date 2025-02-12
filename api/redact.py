@@ -5,6 +5,8 @@ import os
 import shutil
 
 app = FastAPI()
+
+# Vercel environment uses /tmp directory for temporary file storage
 UPLOAD_DIR = "/tmp"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -37,6 +39,7 @@ async def redact_pdf(file: UploadFile = File(...)):
 
     redact_submission_ids(input_path, output_path)
 
+    # Return the redacted PDF download URL
     return {"message": "Redaction complete", "redacted_pdf": f"/api/download/redacted_{file.filename}"}
 
 @app.get("/download/{filename}")
