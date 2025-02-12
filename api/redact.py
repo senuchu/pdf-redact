@@ -8,7 +8,9 @@ app = FastAPI()
 
 # Vercel environment uses /tmp directory for temporary file storage
 UPLOAD_DIR = "/tmp"
+STATIC_DIR = "/static"  # Make sure this is publicly accessible
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(STATIC_DIR, exist_ok=True)
 
 def redact_submission_ids(input_pdf, output_pdf):
     """Redacts Submission IDs and 'Document Details' from a PDF."""
@@ -78,20 +80,22 @@ async def get_upload_form():
 async def redact_pdf(file: UploadFile = File(...)):
     """Redacts sensitive information from an uploaded PDF."""
     input_path = os.path.join(UPLOAD_DIR, file.filename)
-    output_path = os.path.join(UPLOAD_DIR, f"redacted_{file.filename}")
+    output_path = os.path.join(STATIC_DIR, f"redacted_{file.filename}")
 
+    # Save the uploaded PDF to /tmp
     with open(input_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    # Perform redaction and save the result to the /static directory
     redact_submission_ids(input_path, output_path)
 
-    # Return the redacted PDF download URL
-    return {"message": "Redaction complete", "redacted_pdf": f"/download/redacted_{file.filename}"}
+    # Return the redacted PDF download URL (accessible via /static)
+    return {"message": "Redaction complete", "redacted_pdf": f"/static/redacted_{file.filename}"}
 
 @app.get("/download/{filename}")
 async def download_pdf(filename: str):
     """Allows downloading of the redacted PDF."""
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    file_path = os.path.join(STATIC_DIR, filename)
     if os.path.exists(file_path):
         return FileResponse(file_path, media_type="application/pdf", filename=filename)
     return {"error": "File not found"}
