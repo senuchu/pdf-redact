@@ -1,13 +1,19 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "api/redact.py",
-        "use": "@vercel/python"
-      }
-    ],
-    "routes": [
-      { "src": "/redact", "dest": "api/redact.py" }
-    ]
-  }
-  
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/redact.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/redact.py"
+    },
+    {
+      "src": "/",
+      "dest": "/api/redact.py"
+    }
+  ]
+}
