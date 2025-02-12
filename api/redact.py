@@ -86,9 +86,9 @@ async def redact_pdf(file: UploadFile = File(...)):
     redact_submission_ids(input_path, output_path)
 
     # Return the redacted PDF download URL
-    return {"message": "Redaction complete", "redacted_pdf": f"/api/download/redacted_{file.filename}"}
+    return {"message": "Redaction complete", "redacted_pdf": f"/download/redacted_{file.filename}"}
 
-@app.get("/api/download/{filename}")
+@app.get("/download/{filename}")
 async def download_pdf(filename: str):
     """Allows downloading of the redacted PDF."""
     file_path = os.path.join(UPLOAD_DIR, filename)
